@@ -122,3 +122,20 @@ if mode == "Survey":
                 st.session_state.page = 0
                 st.session_state.answers = {}
 
+else:
+    st.title("About this Survey")
+    st.markdown(
+        """
+        This survey aims to gather perspectives on the safety, accessibility, affordability, \n 
+        and comfort levels associated with various Neurotechnologies used in a clinical context. \n 
+        This survey is a part of the NeuroGame you just played and your feedback will help us \n 
+        understand public opinion on these technologies' use for treatment of brain disorders.
+
+        
+        **Confidentiality:**
+        All responses are anonymous and used solely for research purposes. No personally identifiable information will be collected.
+        Participation is voluntary.
+
+        Thank you for taking the time to participate in this survey!
+        """
+    )
