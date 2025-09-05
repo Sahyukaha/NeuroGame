@@ -1,6 +1,5 @@
 import os
 import datetime
-import pandas as pd
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -66,7 +65,7 @@ EVENT_NAME = query_params.get("event", [DEFAULT_EVENT])[0]
 
 # APP MODES
 
-mode = st.sidebar.radio("Choose Mode", ["Survey", "Dashboard"])
+mode = st.sidebar.radio("Choose Mode", ["About", "Survey"])
 
 # SURVEY MODE
 
@@ -123,37 +122,3 @@ if mode == "Survey":
                 st.session_state.page = 0
                 st.session_state.answers = {}
 
-
-# DASHBOARD MODE
-
-else:
-    st.title("📊 Results Dashboard")
-
-    data = sheet.get_all_records()
-    if data:
-        df = pd.DataFrame(data)
-
-        event_filter = st.selectbox("Select Event", df["Event_Name"].unique())
-        df_event = df[df["Event_Name"] == event_filter]
-
-        st.subheader(f"Aggregate Results for {event_filter}")
-
-        for q in questions:
-            col1, col2 = st.columns([2,1])
-
-            with col1:
-                st.markdown(f"**{q['question']}**")
-                counts = df_event[f"{q['id']}_likert"].value_counts().sort_index()
-                st.bar_chart(counts)
-
-            with col2:
-                avg = df_event[f"{q['id']}_likert"].mean()
-                st.metric("Average Score", f"{avg:.2f} / {len(q['scale_labels'])}")
-
-            feedback_col = df_event[f"{q['id']}_text"].dropna()
-            if not feedback_col.empty:
-                with st.expander(f"💬 Feedback for: {q['question']}"):
-                    for resp in feedback_col:
-                        st.write(f"- {resp}")
-    else:
-        st.info("No responses recorded yet.")
