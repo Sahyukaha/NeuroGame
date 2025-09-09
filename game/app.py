@@ -1,5 +1,10 @@
 import streamlit as st
 import random
+import os
+
+base_dir = os.path.dirname(__file__)
+images_dis_dir = os.path.join(base_dir, "images_dis")
+images_tech_dir = os.path.join(base_dir, "images_tech")
 
 disease_options = ['Depression', 
                    'Epilepsy', 
@@ -84,8 +89,8 @@ elif select_page == "Brain Disease information":
     st.title(f"You have been assigned the disease: **{disease_assigned}**")
 
     image_files = [
-        f'images_dis/{disease_dict[disease_assigned]}_1.png',
-        f'images_dis/{disease_dict[disease_assigned]}_2.png'
+        os.path.join(images_dis_dir, f"{disease_dict[disease_assigned]}_1.png"),
+        os.path.join(images_dis_dir, f"{disease_dict[disease_assigned]}_2.png")
     ]
     st.image(image_files[st.session_state['disease_image_index']], width=500)
 
@@ -124,8 +129,8 @@ elif select_page == "Choose Neurotechnology":
     with col_right:
         if view_technology:
             image_files = [
-                f'images_tech/{technology_dict[view_technology]}_1.png',
-                f'images_tech/{technology_dict[view_technology]}_2.png'
+                os.path.join(images_tech_dir, f"{technology_dict[view_technology]}_1.png"),
+                os.path.join(images_tech_dir, f"{technology_dict[view_technology]}_2.png")
             ]
             st.image(image_files[st.session_state['tech_image_index']], width=1200)
 
