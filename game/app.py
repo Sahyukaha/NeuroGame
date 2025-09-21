@@ -6,11 +6,11 @@ base_dir = os.path.dirname(__file__)
 images_dis_dir = os.path.join(base_dir, "images_dis")
 images_tech_dir = os.path.join(base_dir, "images_tech")
 
-disease_options = ['Depression', 
-                   'Epilepsy', 
-                   'Obsessive-Compulsive Disorder (OCD)', 
-                   'Parkinson\'s Disease', 
-                   'Tremor', 
+disease_options = ['Depression',
+                   'Epilepsy',
+                   'Obsessive-Compulsive Disorder (OCD)',
+                   'Parkinson\'s Disease',
+                   'Tremor',
                    'Chronic Pain']
 
 disease_dict = {
@@ -42,11 +42,26 @@ if 'disease_image_index' not in st.session_state:
 if 'tech_image_index' not in st.session_state:
     st.session_state['tech_image_index'] = 0  # start with first image
 
-if 'select_tech_list' not in st.session_state:
-    st.session_state['select_tech_list'] = []
+if 'selected_tech_list' not in st.session_state:
+    st.session_state['selected_tech_list'] = []
 
-select_page = st.sidebar.radio("Contents", 
-                               ["Introduction", 
+if 'player_considerations' not in st.session_state:
+    st.session_state['player_considerations'] = ""
+
+def handle_tech_change():
+    '''
+    Reset the image index when the technology selection changes.
+    '''
+    st.session_state['tech_image_index'] = 0
+
+def update_selected_tech_list():
+    st.session_state.selected_tech_list = st.session_state.select_tech
+
+def update_player_considerations():
+    st.session_state.player_considerations = st.session_state.considerations
+
+select_page = st.sidebar.radio("Contents",
+                               ["Introduction",
                                 "Brain Disease information", 
                                 "Choose Neurotechnology", 
                                 "Survey"])
@@ -69,7 +84,7 @@ if select_page == "Introduction":
         }
         </style>
         ''', unsafe_allow_html=True)
-    
+
     st.markdown(""" ### Gameplay Instructions: """)
     st.markdown("""
                 1. You will be randomly assigned a brain disease from a list of 6 diseases.
@@ -81,7 +96,6 @@ if select_page == "Introduction":
                 7. Finally, you can proceed to a survey to share your perspectives on neurotechnologies in a clinical context.
                 """)
 
-    
 elif select_page == "Brain Disease information":
 
     disease_assigned = st.session_state['disease']
@@ -103,7 +117,7 @@ elif select_page == "Brain Disease information":
         if st.button("Back") and st.session_state['disease_image_index'] < len(image_files) - 1:
             st.session_state['disease_image_index'] += 1
             st.rerun()
-    
+
     if st.button("Choose another disease"):
         st.session_state['disease'] = random.choice(disease_options)
         st.session_state['disease_image_index'] = 0
@@ -112,7 +126,7 @@ elif select_page == "Brain Disease information":
 elif select_page == "Choose Neurotechnology":
 
     st.title(f"Choose a Neurotechnology that you think is best suited for treatment of {st.session_state['disease']}")
-    
+
     col_left, col_right = st.columns([1, 3])
 
     with col_left:
@@ -124,7 +138,8 @@ elif select_page == "Choose Neurotechnology":
                                     'Vagus Nerve Stimulation (VNS)',
                                     'Magnetic Seizure Therapy (MST)',
                                     'Transcranial Direct Current Stimulation (tDCS)',
-                                    'Transcutaneous Electrical Nerve Stimulation (TENS)'])
+                                    'Transcutaneous Electrical Nerve Stimulation (TENS)'],
+                                    on_change=handle_tech_change)
 
     with col_right:
         if view_technology:
@@ -132,17 +147,25 @@ elif select_page == "Choose Neurotechnology":
                 os.path.join(images_tech_dir, f"{technology_dict[view_technology]}_1.png"),
                 os.path.join(images_tech_dir, f"{technology_dict[view_technology]}_2.png")
             ]
-            st.image(image_files[st.session_state['tech_image_index']], width=1200)
 
-            col1, col2 = st.columns([6, 1])
+            max_img_index = len(image_files) - 1
+            min_img_index = 0
+
+            col1, col2 = st.columns(2)
             with col1:
-                if st.button("Front") and st.session_state['tech_image_index'] > 0:
-                    st.session_state['tech_image_index'] -= 1
-                    st.rerun()
+                if st.session_state.tech_image_index < max_img_index:
+                    if st.button("Back"):
+                        st.session_state['tech_image_index'] += 1
+                        st.rerun()
+
             with col2:
-                if st.button("Back") and st.session_state['tech_image_index'] < len(image_files) - 1:
-                    st.session_state['tech_image_index'] += 1
-                    st.rerun()
+                if st.session_state.tech_image_index > min_img_index:
+                    if st.button("Front"):
+                        st.session_state['tech_image_index'] -= 1
+                        st.rerun()
+
+            current_tech_image_index = st.session_state['tech_image_index']
+            st.image(image_files[current_tech_image_index], width=1200)
 
     st.multiselect(f"Select the Neurotechnology you think is best suited for treatment of {st.session_state['disease']} (you can select multiple)",
                    ['Deep Brain Stimulation (DBS)',
@@ -153,13 +176,18 @@ elif select_page == "Choose Neurotechnology":
                     'Magnetic Seizure Therapy (MST)',
                     'Transcranial Direct Current Stimulation (tDCS)',
                     'Transcutaneous Electrical Nerve Stimulation (TENS)'],
-                    key='select_tech_list')
+                    default=st.session_state.selected_tech_list,
+                    key='select_tech',
+                    on_change=update_selected_tech_list)
     
-    if len(st.session_state['select_tech_list']) >= 1:
+    if len(st.session_state['selected_tech_list']) >= 1:
 
-        st.markdown("### Please note any thoughts behind your choice(s) below for sharing with the other participants:")
-        user_thoughts = st.text_area("Your thoughts", height=200)
-
+        st.markdown("### Please note any considerations/thoughts behind your choice(s) below for sharing with the other participants:")
+        user_thoughts = st.text_area("",
+                                     height=200,
+                                     value=st.session_state.player_considerations,
+                                     key='considerations',
+                                     on_change=update_player_considerations)
     
 else:
     # link to survey app
