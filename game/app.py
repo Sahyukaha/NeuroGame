@@ -3,8 +3,8 @@ import random
 import os
 
 base_dir = os.path.dirname(__file__)
-images_dis_dir = os.path.join(base_dir, "images_dis")
-images_tech_dir = os.path.join(base_dir, "images_tech")
+pdf_dis_dir = os.path.join(base_dir, "dis_pdfs")
+pdf_tech_dir = os.path.join(base_dir, "tech_pdfs")
 
 disease_options = ['Depression',
                    'Epilepsy',
@@ -36,11 +36,11 @@ technology_dict = {
 if 'disease' not in st.session_state:
     st.session_state['disease'] = random.choice(disease_options)
 
-if 'disease_image_index' not in st.session_state:
-    st.session_state['disease_image_index'] = 0  # start with first image
+if 'disease_index' not in st.session_state:
+    st.session_state['disease_index'] = 0  # start with first image
 
-if 'tech_image_index' not in st.session_state:
-    st.session_state['tech_image_index'] = 0  # start with first image
+if 'tech_index' not in st.session_state:
+    st.session_state['tech_index'] = 0  # start with first image
 
 if 'selected_tech_list' not in st.session_state:
     st.session_state['selected_tech_list'] = []
@@ -52,7 +52,7 @@ def handle_tech_change():
     '''
     Reset the image index when the technology selection changes.
     '''
-    st.session_state['tech_image_index'] = 0
+    st.session_state['tech_index'] = 0
 
 def update_selected_tech_list():
     st.session_state.selected_tech_list = st.session_state.select_tech
@@ -102,25 +102,35 @@ elif select_page == "Brain Disease information":
 
     st.title(f"You have been assigned the disease: **{disease_assigned}**")
 
-    image_files = [
-        os.path.join(images_dis_dir, f"{disease_dict[disease_assigned]}_1.png"),
-        os.path.join(images_dis_dir, f"{disease_dict[disease_assigned]}_2.png")
+    pdf_files = [
+        os.path.join(pdf_dis_dir, f"{disease_dict[disease_assigned]}_1.pdf"),
+        os.path.join(pdf_dis_dir, f"{disease_dict[disease_assigned]}_2.pdf")
     ]
-    st.image(image_files[st.session_state['disease_image_index']], width=500)
+    
+    max_index = len(pdf_files) - 1
+    min_index = 0
 
     col1, col2 = st.columns([1.6, 1])
     with col1:
-        if st.button("Front") and st.session_state['disease_image_index'] > 0:
-            st.session_state['disease_image_index'] -= 1
-            st.rerun()
-    with col2:
-        if st.button("Back") and st.session_state['disease_image_index'] < len(image_files) - 1:
-            st.session_state['disease_image_index'] += 1
-            st.rerun()
+        if st.session_state['disease_index'] > min_index:
+            if st.button("Front"):
+                st.session_state['disease_index'] -= 1
+                st.rerun()
 
+    with col2:
+        if st.session_state['disease_index'] < max_index:
+            if st.button("Back"):
+                st.session_state['disease_index'] += 1
+                st.rerun()
+        
+
+    current_disease_index = st.session_state.disease_index
+    st.pdf(pdf_files[current_disease_index], height=600)
+    
     if st.button("Choose another disease"):
         st.session_state['disease'] = random.choice(disease_options)
-        st.session_state['disease_image_index'] = 0
+        st.session_state['disease_index'] = 0
+        current_disease_index = st.session_state.disease_index
         st.rerun()
 
 elif select_page == "Choose Neurotechnology":
@@ -143,32 +153,35 @@ elif select_page == "Choose Neurotechnology":
 
     with col_right:
         if view_technology:
-            image_files = [
-                os.path.join(images_tech_dir, f"{technology_dict[view_technology]}_1.png"),
-                os.path.join(images_tech_dir, f"{technology_dict[view_technology]}_2.png")
+
+            pdf_files = [
+                os.path.join(pdf_tech_dir, f"{technology_dict[view_technology]}_1.pdf"),
+                os.path.join(pdf_tech_dir, f"{technology_dict[view_technology]}_2.pdf")
             ]
 
-            max_img_index = len(image_files) - 1
-            min_img_index = 0
+            max_index = len(pdf_files) - 1
+            min_index = 0
 
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns([6, 1])
             with col1:
-                if st.session_state.tech_image_index < max_img_index:
-                    if st.button("Back"):
-                        st.session_state['tech_image_index'] += 1
+                if st.session_state.tech_index > min_index:
+                    if st.button("Front"):
+                        st.session_state['tech_index'] -= 1
                         st.rerun()
 
             with col2:
-                if st.session_state.tech_image_index > min_img_index:
-                    if st.button("Front"):
-                        st.session_state['tech_image_index'] -= 1
+                if st.session_state.tech_index < max_index:
+                    if st.button("Back"):
+                        st.session_state['tech_index'] += 1
                         st.rerun()
+                
 
-            current_tech_image_index = st.session_state['tech_image_index']
-            st.image(image_files[current_tech_image_index], width=1200)
-
-    st.multiselect(f"Select the Neurotechnology you think is best suited for treatment of {st.session_state['disease']} (you can select multiple)",
-                   ['Deep Brain Stimulation (DBS)',
+            current_tech_index = st.session_state['tech_index']
+            st.pdf(pdf_files[current_tech_index], height=600)
+    
+    st.header(f"Select the Neurotechnology you think is best suited for treatment of {st.session_state['disease']} (you can select multiple)")
+    
+    st.multiselect('options',['Deep Brain Stimulation (DBS)',
                     'Focused Ultrasound (FUS)',
                     'Spinal Cord Stimulation (SCS)',
                     'Transcranial Magnetic Stimulation (TMS)',
@@ -178,11 +191,12 @@ elif select_page == "Choose Neurotechnology":
                     'Transcutaneous Electrical Nerve Stimulation (TENS)'],
                     default=st.session_state.selected_tech_list,
                     key='select_tech',
-                    on_change=update_selected_tech_list)
+                    on_change=update_selected_tech_list,
+                    label_visibility="hidden")
     
     if len(st.session_state['selected_tech_list']) >= 1:
 
-        st.markdown("### Please note any considerations/thoughts behind your choice(s) below for sharing with the other participants:")
+        st.markdown("### Please note any considerations/thoughts behind your choice(s) for sharing with the other participants")
         user_thoughts = st.text_area("",
                                      height=200,
                                      value=st.session_state.player_considerations,
@@ -191,6 +205,6 @@ elif select_page == "Choose Neurotechnology":
     
 else:
     # link to survey app
-    st.markdown("## Proceed to the Survey to share your perspectives on Neurotechnologies in a clinical context")
+    st.markdown("## Proceed to the Survey to share your feedback about the game and any reflections on what you learnt")
     st.markdown("Click the link below to proceed to the survey:")
-    st.markdown("[Survey Link](https://neurogame-survey.streamlit.app/)")
+    st.markdown("[Survey Link](https://forms.office.com/r/cjZ3H3k9Xf)")
